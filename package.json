@@ -1,0 +1,30 @@
+{
+  "name": "moat-evaluator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Evaluate the moat of any product or platform — manually or with automated Claude analysis.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "zod": "^4.6.7"
+  },
+  "author": "Deepak Mukunthu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deepak-mukunthu/moat-evaluator.git"
+  },
+  "keywords": [
+    "moat",
+    "strategy",
+    "ai",
+    "claude",
+    "competitive-analysis"
+  ]
+}

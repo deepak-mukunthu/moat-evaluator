@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moat Evaluator — Finding a Real Moat in the AI Era</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface-1: #fcfcfb;
+    --surface-2: #ffffff;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --accent: #2a78d6;
+    --accent-weak: #cde2fb;
+    --series-1: #2a78d6;
+    --good: #0ca30c;
+    --good-text: #006300;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical: #d03b3b;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #222220;
+      --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+      --accent: #3987e5; --accent-weak: #1c3555; --series-1: #3987e5; --good-text: #0ca30c;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #222220;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --accent: #3987e5; --accent-weak: #1c3555; --series-1: #3987e5; --good-text: #0ca30c;
+    --shadow: none;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--text-primary); line-height: 1.5; }
+  a { color: var(--accent); }
+  button { font: inherit; cursor: pointer; }
+  header.app {
+    display: flex; align-items: center; gap: 16px; padding: 14px 24px;
+    border-bottom: 1px solid var(--border); background: var(--surface-1);
+    position: sticky; top: 0; z-index: 10;
+  }
+  header.app h1 { font-size: 17px; margin: 0; font-weight: 650; }
+  header.app .sub { color: var(--text-secondary); font-size: 13px; }
+  header.app .spacer { flex: 1; }
+  .btn {
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-primary);
+    padding: 7px 12px; border-radius: 8px; font-size: 13px;
+  }
+  .btn:hover { border-color: var(--axis); }
+  .btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.ghost { background: transparent; }
+
+  .layout { display: grid; grid-template-columns: 240px minmax(0,1fr) 280px; gap: 24px; padding: 24px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 1100px) { .layout { grid-template-columns: 200px minmax(0,1fr); } aside.live { display: none; } }
+  @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } nav.steps { position: static !important; } }
+
+  nav.steps { position: sticky; top: 76px; align-self: start; display: flex; flex-direction: column; gap: 2px; }
+  nav.steps button {
+    text-align: left; background: transparent; border: 0; padding: 8px 10px; border-radius: 8px;
+    color: var(--text-secondary); display: flex; gap: 10px; align-items: center; font-size: 14px;
+  }
+  nav.steps button:hover { background: var(--surface-1); color: var(--text-primary); }
+  nav.steps button.active { background: var(--surface-1); color: var(--text-primary); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+  nav.steps .dot { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--axis); font-size: 11px; display: grid; place-items: center; flex: none; }
+  nav.steps button.done .dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+  nav.steps .group { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin: 14px 10px 4px; }
+
+  main { min-width: 0; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .kicker { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 4px; }
+  h2 { margin: 0 0 8px; font-size: 22px; }
+  h3 { margin: 0 0 8px; font-size: 16px; }
+  .lede { color: var(--text-secondary); margin: 0 0 12px; }
+  blockquote { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--page); color: var(--text-secondary); border-radius: 0 8px 8px 0; font-size: 14px; }
+  .meta-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .pill { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-secondary); }
+
+  .q { padding: 18px 0; border-top: 1px solid var(--grid); }
+  .q:first-of-type { border-top: 0; }
+  .q-title { font-weight: 600; margin-bottom: 2px; }
+  .q-help { color: var(--text-secondary); font-size: 13px; margin-bottom: 10px; }
+  .opts { display: grid; gap: 6px; }
+  .opt {
+    display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface-2); cursor: pointer; font-size: 14px;
+  }
+  .opt:hover { border-color: var(--axis); }
+  .opt input { margin-top: 3px; accent-color: var(--accent); }
+  .opt.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .opt .lvl { margin-left: auto; color: var(--text-muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  label.field { display: block; margin-bottom: 14px; }
+  label.field span { display: block; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  input[type=text], textarea, select {
+    width: 100%; font: inherit; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text-primary);
+  }
+  textarea { min-height: 80px; resize: vertical; }
+  .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .preset { text-align: left; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-primary); }
+  .preset:hover { border-color: var(--accent); }
+  .preset b { display: block; font-size: 14px; }
+  .preset small { color: var(--text-secondary); }
+
+  .footer-nav { display: flex; justify-content: space-between; margin-top: 8px; }
+
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  @media (max-width: 600px) { .modes { grid-template-columns: 1fr; } }
+  .mode { text-align: left; padding: 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-primary); }
+  .mode:hover { border-color: var(--axis); }
+  .mode.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .mode b { display: block; font-size: 15px; margin-bottom: 2px; }
+  .mode small { color: var(--text-secondary); font-size: 13px; }
+  .notice { font-size: 13px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--page); color: var(--text-secondary); margin: 0 0 14px; }
+  .notice.warn { border-color: var(--warning); }
+  .notice.err { border-color: var(--critical); color: var(--text-primary); }
+  .run-log { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+  .run-log li { display: flex; gap: 8px; align-items: center; color: var(--text-secondary); }
+  .run-log li.current { color: var(--text-primary); font-weight: 500; }
+  .spinner { width: 14px; height: 14px; border: 2px solid var(--grid); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; flex: none; }
+  .tick { width: 14px; flex: none; color: var(--good-text); text-align: center; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ai-note { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: var(--page); border: 1px dashed var(--axis); font-size: 13px; color: var(--text-secondary); }
+  .ai-note b { color: var(--text-primary); }
+  .conf { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--border); margin-left: 4px; }
+  .badge-mode { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: 999px; background: var(--accent-weak); color: var(--text-primary); }
+  .subject { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px 0; margin-bottom: 12px; background: var(--surface-2); }
+  .subject-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); }
+  .run-log .job-name { color: var(--text-primary); font-weight: 600; }
+  .run-log .fail { width: 14px; flex: none; color: var(--critical); text-align: center; font-weight: 700; }
+  .cmp-wrap { overflow-x: auto; }
+  table.cmp th, table.cmp td { vertical-align: top; }
+  table.cmp thead th { min-width: 120px; }
+  table.cmp .verdict { margin-top: 0; }
+  table.cmp th.active, table.cmp td.active { background: var(--page); }
+  table.cmp td .track { height: 6px; background: var(--grid); border-radius: 3px; margin-top: 4px; overflow: hidden; }
+  table.cmp td .fill { height: 100%; background: var(--series-1); border-radius: 0 3px 3px 0; }
+  .peers { display: grid; gap: 4px; margin: 4px 0 10px; }
+  .peer { display: flex; justify-content: space-between; gap: 8px; text-align: left; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-secondary); font-size: 12px; }
+  .peer.active { border-color: var(--accent); color: var(--text-primary); font-weight: 600; }
+  .sources { margin: 6px 0 0 18px; padding: 0; font-size: 13px; }
+  .sources li { margin-bottom: 4px; word-break: break-word; }
+
+  aside.live { position: sticky; top: 76px; align-self: start; }
+  .score-big { font-size: 44px; font-weight: 700; line-height: 1; }
+  .score-big small { font-size: 16px; color: var(--text-muted); font-weight: 500; }
+  .verdict { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; font-size: 14px; margin-top: 8px; }
+  .verdict .ico { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 700; }
+  .mini { margin-top: 14px; display: grid; gap: 8px; }
+  .mini-row { font-size: 12px; color: var(--text-secondary); }
+  .mini-row .track { height: 6px; background: var(--grid); border-radius: 3px; margin-top: 3px; overflow: hidden; }
+  .mini-row .fill { height: 100%; background: var(--series-1); border-radius: 0 3px 3px 0; }
+  .progress { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+
+  /* results */
+  .hero { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; }
+  @media (max-width: 760px) { .hero { grid-template-columns: 1fr; } }
+  .hero .score-big { font-size: 64px; }
+  .verdict-text { color: var(--text-secondary); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+  .chart-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .chart-wrap { position: relative; }
+  .chart-wrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart-wrap .bar-hit { fill: transparent; cursor: default; }
+  .chart-wrap .bar-row:hover .bar { filter: brightness(1.1); }
+  .tooltip {
+    position: absolute; pointer-events: none; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    max-width: 260px; opacity: 0; transition: opacity .08s; z-index: 5;
+  }
+  .tooltip b { display: block; font-size: 13px; margin-bottom: 2px; }
+  table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.data th, table.data td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--grid); }
+  table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .status-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .status-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+  .status-list .ico { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 700; margin-top: 1px; }
+  .ico.good { background: var(--good); } .ico.warning { background: var(--warning); color: #0b0b0b; }
+  .ico.serious { background: var(--serious); color: #0b0b0b; } .ico.critical { background: var(--critical); }
+  .ico.info { background: var(--accent); }
+  .tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+  .rec h4 { margin: 0 0 6px; font-size: 14px; }
+  .rec ul { margin: 0 0 0 18px; padding: 0; font-size: 14px; color: var(--text-secondary); }
+  .rec + .rec { margin-top: 16px; }
+  .saved-list { display: grid; gap: 6px; margin-top: 8px; }
+  .saved-item { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); font-size: 14px; }
+  .saved-item .name { flex: 1; }
+  .muted { color: var(--text-muted); }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text-primary); color: var(--page); padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  @media print {
+    header.app, nav.steps, aside.live, .footer-nav, .toolbar, .no-print { display: none !important; }
+    .layout { display: block; padding: 0; }
+    .card { box-shadow: none; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<header class="app">
+  <div>
+    <h1>Moat Evaluator</h1>
+    <div class="sub">Moat or head start? Based on <a href="https://deepakmukunthu.substack.com/p/finding-a-real-moat-in-the-ai-era" target="_blank" rel="noopener">"Finding a Real Moat in the AI Era"</a></div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn ghost" id="themeBtn" title="Toggle light/dark">◐ Theme</button>
+  <button class="btn" id="resetBtn">New evaluation</button>
+</header>
+
+<div class="layout">
+  <nav class="steps" id="steps" aria-label="Evaluation steps"></nav>
+  <main id="main"></main>
+  <aside class="live" id="live"></aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { ARTICLE_URL, MOATS, STRESS, EROSION, EXEC } from './framework.js';
+
+/* Illustrative presets — rough archetypes, not assessments of real companies. */
+const PRESETS = [
+  { name: 'Thin AI wrapper', desc: 'Prompt + UI on a single model API.',
+    product: { name: 'Thin AI wrapper (example)', desc: 'A chat UI and prompt library on top of one foundation-model API, sold through an app marketplace.' },
+    a: { d1:0,d2:0,d3:0,d4:1, n1:0,n2:0,n3:0,n4:0, w1:0,w2:1,w3:0,w4:0, s1:0,s2:0,s3:1, t1:0,t2:0,t3:1,t4:1,
+         copy:0, price:0, usage:0, vendor:0, prod:2, evals:0 }, erosion: ['channel','model'] },
+  { name: 'Coding assistant with a data flywheel', desc: 'Usage creates training data (Cursor-style).',
+    product: { name: 'AI coding assistant (example)', desc: 'An AI code editor used daily by paying developers; accept/reject signals feed model training.' },
+    a: { d1:3,d2:3,d3:2,d4:3, n1:1,n2:1,n3:3,n4:2, w1:1,w2:2,w3:2,w4:2, s1:0,s2:1,s3:2, t1:1,t2:2,t3:2,t4:2,
+         copy:2, price:1, usage:3, vendor:2, prod:3, evals:3 }, erosion: ['model'] },
+  { name: 'Enterprise agent platform', desc: 'Workflow + accumulated context on a system of record.',
+    product: { name: 'Enterprise agent platform (example)', desc: 'AI agents embedded in the CRM system of record, grounded in years of customer data and workflows.' },
+    a: { d1:2,d2:2,d3:2,d4:3, n1:1,n2:2,n3:3,n4:3, w1:3,w2:3,w3:3,w4:3, s1:1,s2:2,s3:3, t1:2,t2:3,t3:2,t4:2,
+         copy:3, price:2, usage:2, vendor:2, prod:3, evals:2 }, erosion: [] },
+  { name: 'Companion chatbot', desc: 'High usage, high inference bill (Character.AI-style).',
+    product: { name: 'Consumer companion chatbot (example)', desc: 'A consumer chat app with heavy engagement; every conversation is mostly an inference cost.' },
+    a: { d1:1,d2:1,d3:1,d4:2, n1:1,n2:1,n3:2,n4:1, w1:0,w2:2,w3:0,w4:0, s1:0,s2:0,s3:1, t1:0,t2:1,t3:0,t4:0,
+         copy:1, price:0, usage:0, vendor:1, prod:3, evals:1 }, erosion: ['people','model'] },
+];
+
+/* ------------------------------------------------------------------ *
+ * State
+ * ------------------------------------------------------------------ */
+const STORE_KEY = 'moat-evaluator:v1';
+const LIB_KEY = 'moat-evaluator:library:v1';
+const STEPS = [
+  { id: 'product', label: 'Product', group: 'Start' },
+  ...MOATS.map(m => ({ id: m.id, label: m.short, group: 'Five moat types' })),
+  { id: 'stress', label: 'Stress tests', group: 'Test it' },
+  { id: 'exec', label: 'Execution', group: 'Test it' },
+  { id: 'results', label: 'Results', group: 'Decide' },
+];
+
+const MAX_SUBJECTS = 5;
+function blankState() {
+  return { step: 'product', mode: 'manual', product: { name: '', desc: '' }, a: {}, erosion: [], auto: null,
+    autoSubjects: [{ name: '', urls: '' }], autoFocus: '',
+    // A multi-company run: one snapshot per company; the active one lives in the top-level fields.
+    group: null, groupIndex: 0, runErrors: [] };
+}
+const loaded = load() || {};
+let state = { ...blankState(), ...loaded };
+if (!loaded.autoSubjects && loaded.mode === 'auto') state.autoSubjects = [{ name: loaded.product?.name || '', urls: loaded.autoUrls || '' }];
+// In-flight automated analysis (not persisted) and server capabilities.
+let run = null;
+let server = null;
+fetch('/api/status').then(r => r.json()).then(s => { server = s; if (state.step === 'product') renderMain(); }).catch(() => { server = { configured: false, unreachable: true }; });
+
+function load() { try { return JSON.parse(localStorage.getItem(STORE_KEY)); } catch { return null; } }
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+function library() { try { return JSON.parse(localStorage.getItem(LIB_KEY)) || []; } catch { return []; } }
+function saveLibrary(lib) { localStorage.setItem(LIB_KEY, JSON.stringify(lib)); }
+
+/* ------------------------------------------------------------------ *
+ * Scoring
+ * ------------------------------------------------------------------ */
+function moatScore(m) {
+  const answered = m.questions.filter(q => state.a[q.id] != null);
+  if (!answered.length) return null;
+  const sum = answered.reduce((s, q) => s + state.a[q.id], 0);
+  return Math.round(sum / (answered.length * 3) * 100);
+}
+
+function evaluate() {
+  const scores = MOATS.map(m => ({ m, score: moatScore(m) }));
+  const known = scores.filter(s => s.score != null).sort((x, y) => y.score - x.score);
+  if (!known.length) return null;
+
+  // One deep moat beats several shallow ones: weight the strongest heavily.
+  const top = known[0].score, second = known[1]?.score ?? 0;
+  let base = 0.65 * top + 0.35 * second;
+  const adj = [];
+  const A = state.a;
+
+  if (A.usage != null) {
+    const d = [-15, -5, 0, 6][A.usage];
+    if (d) adj.push({ label: 'Usage test', delta: d });
+  }
+  if (A.price != null) {
+    const d = [-10, -4, 0][A.price];
+    if (d) adj.push({ label: 'Half-price test', delta: d });
+  }
+  if (A.vendor != null) {
+    const d = [-8, -3, 0][A.vendor];
+    if (d) adj.push({ label: 'Model-vendor dependency', delta: d });
+  }
+  if (state.erosion.length) adj.push({ label: `Erosion risks (${state.erosion.length})`, delta: -3 * state.erosion.length });
+  if (A.copy != null) {
+    const d = [0, 0, 0, 4, 8][A.copy];
+    if (d) adj.push({ label: 'Copy timeline beyond 24 months', delta: d });
+  }
+
+  let score = base + adj.reduce((s, x) => s + x.delta, 0);
+  let capNote = null;
+  // Under 12 months to copy = head start, by definition.
+  if (A.copy === 0 && score > 30) { capNote = 'Capped at 30: a competitor could match you in under 6 months.'; score = 30; }
+  else if (A.copy === 1 && score > 45) { capNote = 'Capped at 45: under 12 months to copy is a head start, not a moat.'; score = 45; }
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  let verdict;
+  if (score >= 70) verdict = { key: 'real', label: 'Real moat', status: 'good', sym: '✓',
+    text: 'Your advantage looks like it gets stronger with use and harder to copy over time. Protect the flywheel and watch for erosion.' };
+  else if (score >= 50) verdict = { key: 'emerging', label: 'Emerging moat', status: 'warning', sym: '!',
+    text: 'There are real compounding pieces, but they aren\'t yet durable enough to survive a determined, cheaper competitor. Invest where it compounds.' };
+  else if (score >= 30) verdict = { key: 'headstart', label: 'Head start', status: 'serious', sym: '!',
+    text: 'You are ahead, but the lead decays. Without a mechanism that strengthens with use, competitors will catch up.' };
+  else verdict = { key: 'none', label: 'No moat yet', status: 'critical', sym: '×',
+    text: 'Little here gets stronger with use or harder to copy. Treat today\'s position as temporary and build something that compounds.' };
+
+  return { scores, known, base: Math.round(base), adj, score, capNote, verdict, top: known[0], flags: redFlags(), recs: recommendations(scores) };
+}
+
+function redFlags() {
+  const A = state.a, f = [];
+  const add = (status, text) => f.push({ status, text });
+  if (A.d1 === 1) add('serious', 'Your "proprietary" data is public data, cleaned and renamed. A competitor can rebuild it.');
+  if (A.d1 === 0) add('serious', 'No proprietary data. Anyone can get what you have.');
+  if (A.d3 === 0) add('serious', 'Fails the few-months test: your model behaves the same as a competitor\'s.');
+  if (A.n1 === 0) add('warning', 'Fails the 10K vs 10M test: there is no network effect.');
+  if (A.n3 === 0 || A.n4 === 0) add('critical', 'Your distribution is rented and concentrated. You are one partner decision away from losing it.');
+  if (A.w1 === 0) add('serious', 'Switching costs are close to zero. Customers can swap you out in a day.');
+  if (A.s3 === 0) add('warning', 'Your advantage depends on a few people. Talent is a lease, not a deed.');
+  if (A.s1 === 0 && A.usage === 0) add('warning', 'You pay market price for compute while usage mainly adds to your inference bill.');
+  if (A.t4 === 0) add('critical', 'Unaddressed legal or safety exposure can hollow out a company (see Character.AI).');
+  if (A.copy === 0 || A.copy === 1) add('critical', 'A competitor could match you within 12 months. That is a head start, not a moat.');
+  if (A.price === 0) add('critical', 'Fails the half-price test: your margins don\'t survive a competitor at half your price.');
+  if (A.usage === 0) add('critical', 'Usage makes you more expensive, not stronger.');
+  if (A.vendor === 0) add('serious', 'You run on one model vendor with no backup plan (like 67% of enterprises).');
+  if (A.prod != null && A.prod <= 1) add('serious', 'Not in production. A moat strategy that never ships is worth nothing, and 82% never reach production.');
+  if (A.evals === 0) add('warning', 'No evals. You can\'t show, with a number, that your output is any good.');
+  const order = { critical: 0, serious: 1, warning: 2 };
+  return f.sort((x, y) => order[x.status] - order[y.status]);
+}
+
+function recommendations(scores) {
+  const A = state.a, s = Object.fromEntries(scores.map(x => [x.m.id, x.score]));
+  const build = [], buy = [], partner = [];
+  if (s.data == null || s.data < 60) build.push('A data flywheel: capture usage signals (accepts, edits, outcomes) and feed them back so the product improves with every use.');
+  else build.push('Protect and speed up your data flywheel. Keep it fresh so it doesn\'t go stale.');
+  if (s.workflow == null || s.workflow < 60) build.push('Deeper workflow integration: become the place customer context builds up, so leaving means retraining the company.');
+  if (A.evals == null || A.evals < 3) build.push('Evaluation infrastructure: systematic, quantitative evals on every change. This asset is undervalued and compounds.');
+  if (A.prod != null && A.prod < 3) build.push('A path to production. Value shows up after 12+ months in production, not in pilots.');
+
+  if ((s.network ?? 0) < 50) buy.push('Distribution or a network you can\'t build in time, e.g. a developer community or marketplace (Nvidia → Hugging Face).');
+  if ((s.data ?? 0) < 50) buy.push('A scarce, unique dataset or a team that already has a working flywheel (ServiceNow → Moveworks).');
+  buy.push('Move fast: the window for buying scarce assets is short, and a real moat rarely comes up for sale.');
+
+  partner.push('Rent raw model capability rather than building it. It is commoditising.');
+  if (A.vendor == null || A.vendor < 2) partner.push('Adopt a multi-model strategy and keep at least one backup vendor engaged and tested.');
+  if ((s.scarce ?? 0) < 60) partner.push('Treat compute as a cost to optimise, not a moat. Avoid long commitments at tomorrow\'s prices for yesterday\'s hardware.');
+  if (A.n3 != null && A.n3 < 2) partner.push('Use partners for reach, but build an owned channel so no single partner decision can sink you.');
+  return { build, buy, partner };
+}
+
+function completion() {
+  const ids = [...MOATS.flatMap(m => m.questions.map(q => q.id)), ...Object.keys(STRESS), ...Object.keys(EXEC)];
+  return { done: ids.filter(id => state.a[id] != null).length, total: ids.length };
+}
+function stepDone(id) {
+  if (id === 'product') return !!state.product.name.trim();
+  const m = MOATS.find(m => m.id === id);
+  if (m) return m.questions.every(q => state.a[q.id] != null);
+  if (id === 'stress') return Object.keys(STRESS).every(k => state.a[k] != null);
+  if (id === 'exec') return Object.keys(EXEC).every(k => state.a[k] != null);
+  return false;
+}
+
+/* ------------------------------------------------------------------ *
+ * Rendering
+ * ------------------------------------------------------------------ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+function render() {
+  renderSteps(); renderMain(); renderLive(); save();
+}
+
+function renderSteps() {
+  let html = '', group = null;
+  STEPS.forEach((s, i) => {
+    if (s.group !== group) { group = s.group; html += `<div class="group">${esc(group)}</div>`; }
+    const cls = [s.id === state.step ? 'active' : '', stepDone(s.id) ? 'done' : ''].join(' ');
+    html += `<button class="${cls}" data-step="${s.id}"><span class="dot">${stepDone(s.id) ? '✓' : i + 1}</span>${esc(s.label)}</button>`;
+  });
+  $('#steps').innerHTML = html;
+}
+
+function questionHTML(id, q, labels = null) {
+  const opts = q.options.map((o, i) => {
+    const sel = state.a[id] === i;
+    const lvl = labels ? labels[i] : `${i}/${q.options.length - 1}`;
+    return `<label class="opt ${sel ? 'selected' : ''}">
+      <input type="radio" name="${id}" value="${i}" ${sel ? 'checked' : ''} data-q="${id}">
+      <span>${esc(o)}</span><span class="lvl">${esc(lvl)}</span></label>`;
+  }).join('');
+  return `<div class="q"><div class="q-title">${esc(q.text)}</div><div class="q-help">${esc(q.help)}</div><div class="opts">${opts}</div>${aiNote(id, q)}</div>`;
+}
+
+function aiNote(id, q) {
+  const s = state.auto?.answers?.[id];
+  if (!s) return '';
+  const edited = s.choice != null && state.a[id] !== s.choice;
+  const pick = s.choice != null ? `option ${s.choice}, “${esc(q.options[s.choice])}”` : 'no answer';
+  return `<div class="ai-note"><b>Automated analysis:</b> ${pick}<span class="conf">${esc(s.confidence)} confidence</span>
+    ${edited ? '<span class="conf">you changed this</span>' : ''}<br>${mdLite(s.rationale)}</div>`;
+}
+
+function navButtons() {
+  const i = STEPS.findIndex(s => s.id === state.step);
+  const prev = STEPS[i - 1], next = STEPS[i + 1];
+  return `<div class="footer-nav">
+    ${prev ? `<button class="btn" data-step="${prev.id}">← ${esc(prev.label)}</button>` : '<span></span>'}
+    ${next ? `<button class="btn primary" data-step="${next.id}">${esc(next.label)} →</button>` : ''}
+  </div>`;
+}
+
+function renderMain() {
+  const id = state.step, main = $('#main');
+  if (id === 'product') { main.innerHTML = productView(); return; }
+  const m = MOATS.find(m => m.id === id);
+  if (m) {
+    const idx = MOATS.indexOf(m) + 1;
+    main.innerHTML = `<div class="card">
+      <div class="kicker">Moat type ${idx} of ${MOATS.length}${subjectTag()}</div>
+      <h2>${esc(m.title)}</h2>
+      <p class="lede">${esc(m.intro)}</p>
+      <blockquote>${esc(m.quote)}</blockquote>
+      <div class="meta-row"><span class="pill">Example: ${esc(m.example)}</span></div>
+    </div>
+    <div class="card">${m.questions.map(q => questionHTML(q.id, q)).join('')}</div>${navButtons()}`;
+    return;
+  }
+  if (id === 'stress') {
+    main.innerHTML = `<div class="card">
+      <div class="kicker">Three tests${subjectTag()}</div>
+      <h2>Stress-test the moat</h2>
+      <p class="lede">A moat gets stronger with use and harder to copy the longer you hold it. A head start just decays. These tests tell the two apart.</p>
+    </div>
+    <div class="card"><h3>1 · Copy timeline and price durability</h3>
+      ${questionHTML('copy', STRESS.copy, ['head start', 'head start', 'moat-ish', 'moat', 'moat'])}
+      ${questionHTML('price', STRESS.price, ['fail', 'weak', 'pass'])}
+    </div>
+    <div class="card"><h3>2 · Usage effect</h3>
+      ${questionHTML('usage', STRESS.usage, ['fail', 'neutral', 'good', 'strong'])}
+    </div>
+    <div class="card"><h3>3 · Vulnerability</h3>
+      ${questionHTML('vendor', STRESS.vendor, ['fragile', 'ok', 'resilient'])}
+      <div class="q"><div class="q-title">Which of these could erode your position?</div>
+        <div class="q-help">Check all that apply. Each one lowers the score.</div>
+        <div class="opts">${EROSION.map(e => `<label class="opt ${state.erosion.includes(e.id) ? 'selected' : ''}">
+          <input type="checkbox" data-erosion="${e.id}" ${state.erosion.includes(e.id) ? 'checked' : ''}><span>${esc(e.label)}</span></label>`).join('')}</div>
+        ${state.auto?.erosion_rationale ? `<div class="ai-note"><b>Automated analysis:</b> ${esc(state.auto.erosion_rationale)}</div>` : ''}
+      </div>
+    </div>${navButtons()}`;
+    return;
+  }
+  if (id === 'exec') {
+    main.innerHTML = `<div class="card">
+      <div class="kicker">Reality check${subjectTag()}</div>
+      <h2>Execution</h2>
+      <p class="lede">A moat strategy that never ships is worth nothing. These answers don't change the moat score, but they decide whether the moat is real today.</p>
+    </div>
+    <div class="card">${questionHTML('prod', EXEC.prod, ['concept', 'pilot', '<12 mo', '12+ mo'])}${questionHTML('evals', EXEC.evals)}</div>${navButtons()}`;
+    return;
+  }
+  if (id === 'results') { main.innerHTML = resultsView(); wireChart(); }
+}
+
+function subjectTag() { return state.group && state.product.name ? ' · ' + esc(state.product.name) : ''; }
+
+function productView() {
+  const lib = library(), auto = state.mode === 'auto';
+  return `<div class="card">
+    <div class="kicker">Step 1</div>
+    <h2>What are you evaluating?</h2>
+    <p class="lede">Rate any product or platform: yours, a competitor's, or an acquisition target. Go through the five moat types and three stress tests and you'll get a verdict: <b>real moat</b> or <b>head start</b>.</p>
+    <div class="modes" role="radiogroup" aria-label="Evaluation mode">
+      <button class="mode ${!auto ? 'selected' : ''}" data-mode="manual" role="radio" aria-checked="${!auto}"><b>Manual</b><small>You answer each question yourself.</small></button>
+      <button class="mode ${auto ? 'selected' : ''}" data-mode="auto" role="radio" aria-checked="${auto}"><b>Automated</b><small>Enter one or more names. Claude researches each and answers the questions, and you can compare them side by side and review every answer.</small></button>
+    </div>
+    ${auto ? autoForm() : `
+    <label class="field"><span>Product or platform name</span>
+      <input type="text" id="pname" value="${esc(state.product.name)}" placeholder="e.g. Acme Copilot"></label>
+    <label class="field"><span>One-line description (optional)</span>
+      <textarea id="pdesc" placeholder="Who uses it, what it does, how it makes money">${esc(state.product.desc)}</textarea></label>`}
+  </div>
+  ${auto ? '' : `<div class="card">
+    <h3>Or start from an example</h3>
+    <p class="q-help">These are rough archetypes to show how the framework scores. They are not assessments of real companies. Pick one, then adjust the answers.</p>
+    <div class="presets">${PRESETS.map((p, i) => `<button class="preset" data-preset="${i}"><b>${esc(p.name)}</b><small>${esc(p.desc)}</small></button>`).join('')}</div>
+  </div>`}
+  ${lib.length ? `<div class="card"><h3>Saved evaluations</h3><div class="saved-list">${lib.map((e, i) => {
+    const r = withState(e, evaluate);
+    return `<div class="saved-item"><span class="name">${esc(e.product.name || 'Untitled')}</span>
+      <span class="muted">${r ? `${r.score} · ${esc(r.verdict.label)}` : '—'}</span>
+      <button class="btn" data-load="${i}">Open</button><button class="btn ghost" data-del="${i}" title="Delete">✕</button></div>`;
+  }).join('')}</div></div>` : ''}
+  ${navButtons()}`;
+}
+
+function autoForm() {
+  const busy = !!run && !run.done;
+  const status = !server ? '<p class="notice">Checking the analysis server…</p>'
+    : server.unreachable ? '<p class="notice err">Can\'t reach the analysis server. Start it with <code>npm start</code> and open the app from the address it prints.</p>'
+    : !server.configured ? '<p class="notice err">Automated analysis needs Claude credentials. Restart the server with <code>ANTHROPIC_API_KEY</code> set.</p>'
+    : server.webSearch === false ? `<p class="notice warn">This provider doesn't support live web search, so the analysis uses ${esc(server.model)}'s training knowledge plus any URLs you add below. Recent events may be missing.</p>`
+    : '';
+  const subs = state.autoSubjects, multi = subs.length > 1, dis = busy ? 'disabled' : '';
+  const subjects = subs.map((x, i) => {
+    const fields = `<label class="field"><span>${multi ? 'Name' : 'Company or product name'}</span>
+        <input type="text" data-subj="${i}" data-field="name" value="${esc(x.name)}" placeholder="${i ? 'e.g. GitHub Copilot' : 'e.g. Cursor, Hugging Face, Notion'}" ${dis}></label>
+      <label class="field"><span>Source URLs (optional, one per line, up to 5)</span>
+        <textarea data-subj="${i}" data-field="urls" style="min-height:56px" placeholder="https://example.com/about&#10;https://example.com/investor-relations" ${dis}>${esc(x.urls)}</textarea></label>`;
+    return multi ? `<div class="subject"><div class="subject-head"><span>Company ${i + 1}</span>
+        ${busy ? '' : `<button class="btn ghost" data-rmsubj="${i}" style="font-size:12px;padding:3px 8px">Remove</button>`}</div>${fields}</div>` : fields;
+  }).join('');
+  const log = run ? `<ul class="run-log">${run.jobs.map(j => {
+      const icon = j.status === 'running' ? '<span class="spinner"></span>' : j.status === 'done' ? '<span class="tick">✓</span>'
+        : j.status === 'error' ? '<span class="fail">×</span>' : '<span class="tick muted">·</span>';
+      const msg = j.status === 'error' ? j.error : j.status === 'done' ? 'Done' : j.status === 'queued' ? 'Waiting' : j.log[j.log.length - 1] || 'Starting';
+      return `<li class="${j.status === 'running' ? 'current' : ''}">${icon}<span>${multi || run.jobs.length > 1 ? `<span class="job-name">${esc(j.name)}</span> · ` : ''}${esc(msg)}</span></li>`;
+    }).join('')}</ul>
+    ${busy ? `<p class="q-help" style="margin-top:10px">Elapsed <span id="elapsed">${Math.round((Date.now() - run.started) / 1000)}</span>s. Each analysis usually takes one to three minutes${run.jobs.length > 1 ? `; up to ${CONCURRENCY} run at once` : ''}.</p>` : ''}
+    ${run.error ? `<p class="notice err" style="margin-top:12px">${esc(run.error)}</p>` : ''}` : '';
+  const last = state.group ? `Last comparison: ${state.group.map(g => esc(g.product.name)).join(', ')}.`
+    : state.auto ? `Last analysis: ${esc(state.auto.subject)}, ${new Date(state.auto.analyzedAt).toLocaleString()}.` : '';
+  return `${status}
+    ${subjects}
+    ${!busy && subs.length < MAX_SUBJECTS ? `<p style="margin:0 0 14px"><button class="btn" id="addSubj">+ Add a company to compare</button>
+      <span class="q-help" style="margin-left:8px">Optional. Up to ${MAX_SUBJECTS} companies, compared side by side.</span></p>` : ''}
+    <label class="field"><span>Context or focus (optional${multi ? ', applies to every company' : ''})</span>
+      <textarea id="afocus" placeholder="e.g. Evaluate the enterprise product only. We're considering an acquisition." ${dis}>${esc(state.autoFocus || '')}</textarea></label>
+    <div class="toolbar">
+      ${busy ? '<button class="btn" id="cancelRun">Cancel</button>'
+        : `<button class="btn primary" id="runAuto" ${server?.configured ? '' : 'disabled'}>${multi ? 'Analyse and compare' : 'Run automated analysis'}</button>`}
+    </div>
+    ${log}
+    ${last && !busy ? `<p class="q-help" style="margin-top:12px">${last} <a href="#" data-step="results">View results</a></p>` : ''}`;
+}
+
+const CONCURRENCY = 3;
+
+// Runs one company's analysis, streaming its progress messages into job.log.
+async function analyzeOne(job, signal) {
+  const res = await fetch('/api/analyze', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, signal,
+    body: JSON.stringify({ subject: job.name, focus: state.autoFocus || '', urls: job.urls || '' }),
+  });
+  if (!res.ok) throw new Error(`Server error ${res.status}`);
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buf = '', result = null;
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += value;
+    let nl;
+    while ((nl = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+      if (!line) continue;
+      const evt = JSON.parse(line);
+      if (evt.type === 'status') { job.log.push(evt.message); if (state.step === 'product') renderMain(); }
+      else if (evt.type === 'error') throw new Error(evt.message);
+      else if (evt.type === 'result') result = evt.data;
+    }
+  }
+  if (!result) throw new Error('The analysis ended without a result.');
+  return result;
+}
+
+async function runAnalysis() {
+  const seen = new Set();
+  const subjects = state.autoSubjects.map(x => ({ name: x.name.trim(), urls: x.urls || '' }))
+    .filter(x => x.name && !seen.has(x.name.toLowerCase()) && seen.add(x.name.toLowerCase()));
+  if (!subjects.length) { toast('Enter a company or product name first'); $('[data-subj="0"][data-field="name"]')?.focus(); return; }
+  const controller = new AbortController();
+  run = { jobs: subjects.map(x => ({ ...x, log: [], status: 'queued', error: null, result: null })), started: Date.now(), controller, error: null, done: false };
+  renderMain();
+  const timer = setInterval(() => { const el = $('#elapsed'); if (el) el.textContent = Math.round((Date.now() - run.started) / 1000); }, 1000);
+  let next = 0;
+  const worker = async () => {
+    while (next < run.jobs.length && !controller.signal.aborted) {
+      const job = run.jobs[next++];
+      job.status = 'running'; if (state.step === 'product') renderMain();
+      try { job.result = await analyzeOne(job, controller.signal); job.status = 'done'; }
+      catch (e) { job.status = 'error'; job.error = e.message; }
+      if (state.step === 'product') renderMain();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, run.jobs.length) }, worker));
+  clearInterval(timer);
+
+  if (controller.signal.aborted) { run = null; toast('Analysis cancelled'); if (state.step === 'product') renderMain(); return; }
+  const ok = run.jobs.filter(j => j.result), failed = run.jobs.filter(j => !j.result);
+  if (!ok.length) {
+    run.done = true;
+    run.error = run.jobs.length > 1 ? 'None of the analyses finished. See the errors above.' : null;
+    if (state.step === 'product') renderMain();
+    return;
+  }
+  const snaps = ok.map(j => snapshotFromResult(j.result));
+  Object.assign(state, snaps[0]);
+  state.group = snaps.length > 1 ? snaps : null;
+  state.groupIndex = 0;
+  state.runErrors = failed.map(j => ({ subject: j.name, error: j.error }));
+  if (server) server.webSearch = ok[0].result.method === 'web';
+  run = null;
+  state.step = 'results'; render(); window.scrollTo({ top: 0 });
+  toast(failed.length ? `${ok.length} of ${ok.length + failed.length} analyses finished.` : snaps.length > 1 ? 'Analyses complete. Compare them below.' : 'Analysis complete. Review and adjust any answer.');
+}
+
+function snapshotFromResult(r) {
+  const a = {};
+  for (const [id, ans] of Object.entries(r.answers)) if (ans.choice != null) a[id] = ans.choice;
+  return { mode: 'auto', product: { name: r.subject, desc: r.company_summary }, a, erosion: [...r.erosion], auto: r };
+}
+
+// The evaluation-specific part of state, for storing in the group or the library.
+function snapshot(s = state) {
+  return JSON.parse(JSON.stringify({ mode: s.mode, product: s.product, a: s.a, erosion: s.erosion, auto: s.auto }));
+}
+
+function groupItems() {
+  return state.group ? state.group.map((g, i) => i === state.groupIndex ? snapshot() : g) : [];
+}
+
+function switchTo(i) {
+  if (!state.group || i === state.groupIndex) return;
+  state.group[state.groupIndex] = snapshot();
+  Object.assign(state, JSON.parse(JSON.stringify(state.group[i])));
+  state.groupIndex = i;
+  render();
+}
+
+function withState(s, fn) { const prev = state; state = s; try { return fn(); } finally { state = prev; } }
+
+function renderLive() {
+  const r = evaluate(), c = completion();
+  const el = $('#live');
+  if (!r) { el.innerHTML = `<div class="card"><div class="kicker">Live score</div><p class="muted">Answer questions to see your moat score build up.</p><div class="progress">${c.done}/${c.total} answered</div></div>`; return; }
+  el.innerHTML = `<div class="card">
+    <div class="kicker">Live score${state.product.name ? ' · ' + esc(state.product.name) : ''}</div>
+    ${state.auto ? '<div style="margin:2px 0 8px"><span class="badge-mode">Automated</span></div>' : ''}
+    ${state.group ? `<div class="peers" aria-label="Companies in this comparison">${groupItems().map((g, i) => {
+      const e = withState(g, evaluate);
+      return `<button class="peer ${i === state.groupIndex ? 'active' : ''}" data-pick="${i}"><span>${esc(g.product.name)}</span><span>${e ? e.score : '—'}</span></button>`;
+    }).join('')}</div>` : ''}
+    <div class="score-big">${r.score}<small>/100</small></div>
+    ${verdictBadge(r.verdict)}
+    <div class="mini">${r.scores.map(s => `<div class="mini-row">${esc(s.m.short)} <span style="float:right">${s.score ?? '—'}</span>
+      <div class="track"><div class="fill" style="width:${s.score ?? 0}%"></div></div></div>`).join('')}</div>
+    <div class="progress">${c.done}/${c.total} answered${c.done < c.total ? ' · score is provisional' : ''}</div>
+    <div style="margin-top:12px"><button class="btn primary" data-step="results" style="width:100%">See full results</button></div>
+  </div>`;
+}
+
+function verdictBadge(v) {
+  return `<div class="verdict"><span class="ico ${v.status}" style="background:var(--${v.status})">${v.sym}</span>${esc(v.label)}</div>`;
+}
+
+function resultsView() {
+  const r = evaluate();
+  if (!r) return `<div class="card"><h2>No answers yet</h2><p class="lede">Go through the moat types and stress tests first, or load an example on the Product step.</p>${navButtons()}</div>`;
+  const c = completion();
+  const execNote = state.a.prod == null ? '' : state.a.prod === 3
+    ? `<li><span class="ico good">✓</span><span>In production 12+ months. Teams like this report a +287% median annualised ROI.</span></li>`
+    : state.a.prod === 2
+      ? `<li><span class="ico warning">!</span><span>In production under 12 months. The payoff usually shows up after a year in production.</span></li>`
+      : `<li><span class="ico critical">×</span><span>Not in production. Teams stuck in pilot report −34% ROI, so this moat is still theoretical.</span></li>`;
+
+  return `<div class="card">
+    <div class="kicker">Results${state.product.name ? ' · ' + esc(state.product.name) : ''}</div>
+    <div class="hero">
+      <div><div class="score-big">${r.score}<small>/100</small></div>${verdictBadge(r.verdict)}</div>
+      <div>
+        <p class="verdict-text" style="margin:0 0 8px">${esc(r.verdict.text)}</p>
+        <p class="q-help" style="margin:0">Strongest moat: <b>${esc(r.top.m.short)}</b> (${r.top.score}).
+          ${r.capNote ? '<br>' + esc(r.capNote) : ''}
+          ${c.done < c.total ? `<br>Provisional: ${c.total - c.done} question(s) unanswered.` : ''}</p>
+      </div>
+    </div>
+  </div>
+  ${state.runErrors?.length ? `<p class="notice err">Couldn't analyse ${state.runErrors.map(x => `${esc(x.subject)} (${esc(x.error)})`).join('; ')}.</p>` : ''}
+  ${compareCard()}
+  ${autoCard()}
+
+  <div class="grid2">
+    <div class="card">
+      <div class="chart-head"><h3>Strength by moat type</h3>
+        <button class="btn ghost no-print" id="tableToggle" style="font-size:12px;padding:4px 8px">Table view</button></div>
+      <p class="q-help">0–100 per moat type. One deep moat matters more than several shallow ones.</p>
+      <div class="chart-wrap" id="chartWrap"><div id="chartSvg"></div><div class="tooltip" id="tip"></div></div>
+      <div id="tableView" hidden>${scoreTable(r)}</div>
+    </div>
+    <div class="card">
+      <h3>How the score was built</h3>
+      <table class="data">
+        <tr><td>Core moat strength <span class="muted">(65% strongest + 35% second)</span></td><td class="num">${r.base}</td></tr>
+        ${r.adj.map(a => `<tr><td>${esc(a.label)}</td><td class="num" style="color:${a.delta > 0 ? 'var(--good-text)' : 'var(--text-primary)'}">${a.delta > 0 ? '+' : '−'}${Math.abs(a.delta)}</td></tr>`).join('')}
+        ${r.capNote ? `<tr><td>Copy-timeline cap</td><td class="num">cap</td></tr>` : ''}
+        <tr><th>Final score</th><th class="num">${r.score}</th></tr>
+      </table>
+      <p class="q-help" style="margin-top:12px">Bands: 70+ real moat · 50–69 emerging · 30–49 head start · under 30 no moat yet.</p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Red flags</h3>
+      ${r.flags.length ? `<ul class="status-list">${r.flags.map(f => `<li><span class="ico ${f.status}">${f.status === 'critical' ? '×' : '!'}</span><span><span class="tag">${f.status}</span><br>${esc(f.text)}</span></li>`).join('')}</ul>`
+        : '<p class="muted">No red flags from your answers.</p>'}
+    </div>
+    <div class="card">
+      <h3>Execution reality check</h3>
+      <ul class="status-list">
+        ${execNote || '<li class="muted">Answer the Execution step.</li>'}
+        ${state.a.evals != null ? (state.a.evals === 3
+          ? '<li><span class="ico good">✓</span><span>Systematic evals in place. This undervalued asset compounds.</span></li>'
+          : '<li><span class="ico warning">!</span><span>Evals are incomplete. Being able to say, with a number, whether the output is good is itself a moat.</span></li>') : ''}
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Where to invest</h3>
+    <div class="rec"><h4>Build what compounds</h4><ul>${r.recs.build.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+    <div class="rec"><h4>Buy what is scarce, while the window is open</h4><ul>${r.recs.buy.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+    <div class="rec"><h4>Partner for what is commoditising</h4><ul>${r.recs.partner.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+  </div>
+
+  <div class="card no-print">
+    <h3>Save &amp; share</h3>
+    <div class="toolbar">
+      <button class="btn primary" id="saveLib">${state.group ? 'Save all to library' : 'Save to library'}</button>
+      <button class="btn" id="copyMd">Copy as Markdown</button>
+      <button class="btn" id="dlMd">Download .md</button>
+      <button class="btn" id="dlJson">Export JSON</button>
+      <label class="btn" style="display:inline-flex;align-items:center">Import JSON<input type="file" id="importJson" accept="application/json" hidden></label>
+      <button class="btn" onclick="window.print()">Print / PDF</button>
+    </div>
+  </div>
+  ${navButtons()}`;
+}
+
+// Side-by-side comparison: one column per company, one row per measure.
+function compareCard() {
+  if (!state.group) return '';
+  const items = groupItems().map(g => ({ g, e: withState(g, evaluate) }));
+  const best = vals => { const v = vals.filter(x => x != null); return v.length ? Math.max(...v) : null; };
+  const scoreRow = (label, vals) => {
+    const top = best(vals);
+    return `<tr><th scope="row">${label}</th>${vals.map((v, i) => `<td class="num ${i === state.groupIndex ? 'active' : ''}">
+      ${v === top && v != null ? `<b>${v}</b>` : v ?? '—'}<div class="track"><div class="fill" style="width:${v ?? 0}%"></div></div></td>`).join('')}</tr>`;
+  };
+  const textRow = (label, cells) => `<tr><th scope="row">${label}</th>${cells.map((c, i) => `<td class="${i === state.groupIndex ? 'active' : ''}">${c}</td>`).join('')}</tr>`;
+  const leader = items.reduce((b, x) => (x.e?.score ?? -1) > (b.e?.score ?? -1) ? x : b);
+  return `<div class="card">
+    <div class="chart-head"><h3>Side-by-side comparison</h3><span class="q-help">${items.length} companies</span></div>
+    <p class="q-help">Highest score in each row is in bold. <b>${esc(leader.g.product.name)}</b> has the strongest overall position. Click a company to see its full results and review its answers.</p>
+    <div class="cmp-wrap"><table class="data cmp">
+      <thead><tr><th></th>${items.map(({ g }, i) => `<th class="${i === state.groupIndex ? 'active' : ''}">
+        <button class="btn ${i === state.groupIndex ? 'primary' : ''}" data-pick="${i}" style="font-size:12px;padding:4px 8px;text-align:left">${esc(g.product.name)}</button>
+        ${i === state.groupIndex ? '<div class="q-help" style="margin:4px 0 0">Viewing</div>' : ''}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${scoreRow('Overall score', items.map(x => x.e?.score ?? null))}
+        ${textRow('Verdict', items.map(x => x.e ? verdictBadge(x.e.verdict) : '—'))}
+        ${MOATS.map((m, k) => scoreRow(esc(m.short), items.map(x => x.e?.scores[k].score ?? null))).join('')}
+        ${textRow('Strongest moat', items.map(x => x.e ? esc(x.e.top.m.short) : '—'))}
+        ${textRow('Copy timeline', items.map(x => x.g.a.copy != null ? esc(STRESS.copy.options[x.g.a.copy]) : '—'))}
+        ${textRow('Red flags', items.map(x => x.e ? (() => {
+          const n = s => x.e.flags.filter(f => f.status === s).length;
+          return `${x.e.flags.length}${x.e.flags.length ? ` <span class="muted">(${n('critical')} critical)</span>` : ''}`;
+        })() : '—'))}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+function autoCard() {
+  const r = state.auto;
+  if (!r) return '';
+  const edits = Object.entries(r.answers).filter(([id, a]) => a.choice != null && state.a[id] !== a.choice).length;
+  return `<div class="card">
+    <div class="chart-head"><h3>Automated analysis</h3><span class="badge-mode">${r.method === 'web' ? 'Web research' : 'Model knowledge'}</span></div>
+    <p class="q-help">${esc(r.model)} · ${new Date(r.analyzedAt).toLocaleString()}${edits ? ` · you changed ${edits} answer${edits > 1 ? 's' : ''}` : ''}</p>
+    ${r.method !== 'web' ? '<p class="notice warn">No live web search was available, so this analysis is based on the model\'s training knowledge and any URLs you supplied. Check recent developments yourself.</p>' : ''}
+    <div>${mdLite(r.analysis_summary)}</div>
+    ${r.evidence?.length ? `<h4 style="margin:12px 0 4px;font-size:14px">Key evidence</h4><ul class="sources">${r.evidence.map(e => `<li>${esc(e.claim)} <span class="muted">(${linkify(e.source)})</span></li>`).join('')}</ul>` : ''}
+    ${r.sources?.length ? `<h4 style="margin:12px 0 4px;font-size:14px">Sources consulted</h4><ul class="sources">${r.sources.map(x => `<li>${linkify(x.url, x.title && !x.title.startsWith('Provided by you') ? x.title : x.url)}${x.title?.startsWith('Provided by you') ? ` <span class="muted">(${esc(x.title.toLowerCase())})</span>` : ''}</li>`).join('')}</ul>` : ''}
+    ${r.skipped?.length ? `<p class="q-help" style="margin-top:8px">Couldn't read: ${r.skipped.map(x => `${esc(x.url)} (${esc(x.reason)})`).join('; ')}</p>` : ''}
+    ${r.caveats ? `<div class="q-help" style="margin-top:12px"><b>Caveats</b>${mdLite(r.caveats)}</div>` : ''}
+    <p class="q-help" style="margin-top:8px">Each question step shows the analysis's answer and reasoning. Change any answer there and the score updates.</p>
+  </div>`;
+}
+
+// Minimal, escape-first Markdown: paragraphs, "- " bullets and **bold**.
+function mdLite(text) {
+  const inline = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  let html = '', para = [], list = [];
+  const flushPara = () => { if (para.length) html += `<p style="margin:0 0 10px">${para.map(inline).join('<br>')}</p>`; para = []; };
+  const flushList = () => { if (list.length) html += `<ul class="sources">${list.map(l => `<li>${inline(l)}</li>`).join('')}</ul>`; list = []; };
+  for (const line of String(text || '').trim().split('\n')) {
+    const bullet = line.match(/^\s*[-*•] (.*)/);
+    if (bullet) { flushPara(); list.push(bullet[1]); }
+    else if (!line.trim()) { flushPara(); flushList(); }
+    else { flushList(); para.push(line); }
+  }
+  flushPara(); flushList();
+  return html;
+}
+
+function linkify(src, label) {
+  return /^https?:\/\//.test(src || '')
+    ? `<a href="${esc(src)}" target="_blank" rel="noopener noreferrer">${esc(label || src)}</a>`
+    : esc(label || src);
+}
+
+/* Horizontal bar chart — single series, magnitude 0–100. */
+function barChart(scores, W) {
+  W = Math.max(320, Math.round(W));
+  const rowH = 34, labelW = 170, padR = 40, top = 8, bottom = 26;
+  const H = top + scores.length * rowH + bottom;
+  const plotW = W - labelW - padR;
+  const x = v => labelW + (v / 100) * plotW;
+  let g = '';
+  [0, 25, 50, 75, 100].forEach(t => {
+    g += `<line x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${H - bottom}" stroke="var(--grid)" stroke-width="1"/>
+      <text x="${x(t)}" y="${H - bottom + 16}" text-anchor="middle" font-size="11" fill="var(--text-muted)" style="font-variant-numeric:tabular-nums">${t}</text>`;
+  });
+  scores.forEach((s, i) => {
+    const y = top + i * rowH, bh = 16, by = y + (rowH - bh) / 2;
+    const v = s.score ?? 0, w = Math.max(0, x(v) - labelW);
+    const r = Math.min(4, w / 2);
+    // Rounded data-end only; flat at the baseline.
+    const path = w > 0 ? `M${labelW},${by} H${labelW + w - r} Q${labelW + w},${by} ${labelW + w},${by + r} V${by + bh - r} Q${labelW + w},${by + bh} ${labelW + w - r},${by + bh} H${labelW} Z` : '';
+    g += `<g class="bar-row" data-i="${i}">
+      <rect class="bar-hit" x="0" y="${y}" width="${W}" height="${rowH}"/>
+      <text x="${labelW - 10}" y="${y + rowH / 2 + 4}" text-anchor="end" font-size="13" fill="var(--text-secondary)">${esc(s.m.short)}</text>
+      ${path ? `<path class="bar" d="${path}" fill="var(--series-1)"/>` : ''}
+      <text x="${labelW + w + 6}" y="${y + rowH / 2 + 4}" font-size="12" fill="var(--text-primary)" style="font-variant-numeric:tabular-nums">${s.score ?? '—'}</text>
+    </g>`;
+  });
+  g += `<line x1="${labelW}" x2="${labelW}" y1="${top}" y2="${H - bottom}" stroke="var(--axis)" stroke-width="1"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Moat strength by type, 0 to 100">${g}</svg>`;
+}
+
+function scoreTable(r) {
+  return `<table class="data"><tr><th>Moat type</th><th class="num">Score</th><th class="num">Answered</th></tr>
+    ${r.scores.map(s => `<tr><td>${esc(s.m.title)}</td><td class="num">${s.score ?? '—'}</td>
+      <td class="num">${s.m.questions.filter(q => state.a[q.id] != null).length}/${s.m.questions.length}</td></tr>`).join('')}</table>`;
+}
+
+function wireChart() {
+  const wrap = $('#chartWrap'), tip = $('#tip');
+  if (!wrap) return;
+  const r = evaluate();
+  const draw = () => { $('#chartSvg').innerHTML = barChart(r.scores, wrap.clientWidth); };
+  draw();
+  if (window.ResizeObserver) new ResizeObserver(draw).observe(wrap);
+  wrap.addEventListener('mousemove', e => {
+      const row = e.target.closest('.bar-row');
+      if (!row) { tip.style.opacity = 0; return; }
+      const s = r.scores[+row.dataset.i];
+      const weakest = s.m.questions.filter(q => state.a[q.id] != null).sort((a, b) => state.a[a.id] - state.a[b.id])[0];
+      tip.innerHTML = `<b>${esc(s.m.short)}: ${s.score ?? '—'}</b>${esc(s.m.title)}${weakest ? `<br><span class="muted">Weakest answer:</span> ${esc(weakest.options[state.a[weakest.id]])}` : ''}`;
+      const rect = wrap.getBoundingClientRect();
+      let left = e.clientX - rect.left + 12, topPx = e.clientY - rect.top + 12;
+      if (left + 260 > rect.width) left = e.clientX - rect.left - 270;
+      tip.style.left = left + 'px'; tip.style.top = topPx + 'px'; tip.style.opacity = 1;
+  });
+  wrap.addEventListener('mouseleave', () => tip.style.opacity = 0);
+  $('#tableToggle').onclick = () => {
+    const tv = $('#tableView'), showTable = tv.hidden;
+    tv.hidden = !showTable; wrap.hidden = showTable;
+    $('#tableToggle').textContent = showTable ? 'Chart view' : 'Table view';
+  };
+  $('#saveLib').onclick = () => {
+    const lib = library(), items = state.group ? groupItems() : [snapshot()];
+    for (const snap of items) {
+      const name = snap.product.name || 'Untitled';
+      const i = lib.findIndex(e => e.product.name === name);
+      const entry = { ...snap, step: 'results', savedAt: new Date().toISOString() };
+      if (i >= 0) lib[i] = entry; else lib.push(entry);
+    }
+    saveLibrary(lib); toast(items.length > 1 ? `Saved ${items.length} evaluations to library` : `Saved "${items[0].product.name || 'Untitled'}" to library`);
+  };
+  $('#copyMd').onclick = () => navigator.clipboard.writeText(markdown()).then(() => toast('Markdown copied'), () => toast('Copy failed'));
+  $('#dlMd').onclick = () => download(`${slug()}-moat.md`, markdown(), 'text/markdown');
+  $('#dlJson').onclick = () => download(`${slug()}-moat.json`, JSON.stringify(state, null, 2), 'application/json');
+  $('#importJson').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    f.text().then(t => { const s = JSON.parse(t); if (!s.a) throw 0; state = { ...blankState(), ...s, step: 'results' }; render(); toast('Imported'); })
+      .catch(() => toast('Not a valid evaluation file'));
+  };
+}
+
+function slug() { return (state.product.name || 'evaluation').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1800); }
+
+function markdown() {
+  const r = evaluate(); if (!r) return '';
+  const ans = (q, id) => (state.a[id] != null ? q.options[state.a[id]] : '_unanswered_') +
+    (state.auto?.answers?.[id]?.rationale ? `\n  - _Analysis (${state.auto.answers[id].confidence} confidence):_ ${state.auto.answers[id].rationale}` : '');
+  let md = `# Moat evaluation: ${state.product.name || 'Untitled'}\n\n`;
+  if (state.product.desc) md += `> ${state.product.desc}\n\n`;
+  md += `**Score: ${r.score}/100 · ${r.verdict.label}**\n\n${r.verdict.text}\n\n`;
+  if (r.capNote) md += `_${r.capNote}_\n\n`;
+  if (state.group) {
+    const items = groupItems().map(g => ({ g, e: withState(g, evaluate) }));
+    md += `## Comparison\n\n| | ${items.map(x => x.g.product.name).join(' | ')} |\n|---|${items.map(() => '---:').join('|')}|\n`;
+    md += `| Overall score | ${items.map(x => x.e?.score ?? '—').join(' | ')} |\n| Verdict | ${items.map(x => x.e?.verdict.label ?? '—').join(' | ')} |\n`;
+    md += MOATS.map((m, k) => `| ${m.short} | ${items.map(x => x.e?.scores[k].score ?? '—').join(' | ')} |`).join('\n') + '\n\n';
+    md += `_Detailed results below are for ${state.product.name}._\n\n`;
+  }
+  const au = state.auto;
+  if (au) {
+    md += `## Automated analysis\n\n_${au.model}, ${au.method === 'web' ? 'web research' : 'model knowledge only'}, ${au.analyzedAt.slice(0, 10)}_\n\n${au.analysis_summary}\n\n`;
+    if (au.evidence?.length) md += `**Key evidence**\n${au.evidence.map(e => `- ${e.claim} (${e.source})`).join('\n')}\n\n`;
+    if (au.caveats) md += `**Caveats:** ${au.caveats}\n\n`;
+  }
+  md += `## Moat strength by type\n\n| Moat type | Score |\n|---|---:|\n${r.scores.map(s => `| ${s.m.title} | ${s.score ?? '—'} |`).join('\n')}\n\n`;
+  md += `## Red flags\n\n${r.flags.length ? r.flags.map(f => `- **${f.status}**: ${f.text}`).join('\n') : '- None'}\n\n`;
+  md += `## Where to invest\n\n**Build what compounds**\n${r.recs.build.map(x => `- ${x}`).join('\n')}\n\n**Buy what is scarce**\n${r.recs.buy.map(x => `- ${x}`).join('\n')}\n\n**Partner for what is commoditising**\n${r.recs.partner.map(x => `- ${x}`).join('\n')}\n\n`;
+  md += `## Answers\n\n`;
+  MOATS.forEach(m => { md += `### ${m.title}\n${m.questions.map(q => `- ${q.text}\n  - ${ans(q, q.id)}`).join('\n')}\n\n`; });
+  md += `### Stress tests\n${Object.entries(STRESS).map(([k, q]) => `- ${q.text}\n  - ${ans(q, k)}`).join('\n')}\n`;
+  md += `- Erosion risks: ${state.erosion.length ? EROSION.filter(e => state.erosion.includes(e.id)).map(e => e.label).join('; ') : 'none'}\n\n`;
+  md += `### Execution\n${Object.entries(EXEC).map(([k, q]) => `- ${q.text}\n  - ${ans(q, k)}`).join('\n')}\n\n`;
+  md += `---\nFramework: [Finding a Real Moat in the AI Era](${ARTICLE_URL})\n`;
+  return md;
+}
+
+/* ------------------------------------------------------------------ *
+ * Events
+ * ------------------------------------------------------------------ */
+document.addEventListener('click', e => {
+  const step = e.target.closest('[data-step]');
+  if (step) { state.step = step.dataset.step; render(); window.scrollTo({ top: 0 }); return; }
+  const mode = e.target.closest('[data-mode]');
+  if (mode) { if (!run || run.done) { state.mode = mode.dataset.mode; render(); } return; }
+  if (e.target.closest('#runAuto')) { runAnalysis(); return; }
+  if (e.target.closest('#cancelRun')) { run?.controller.abort(); return; }
+  if (e.target.closest('#addSubj')) {
+    if (state.autoSubjects.length < MAX_SUBJECTS) state.autoSubjects.push({ name: '', urls: '' });
+    renderMain(); save(); $(`[data-subj="${state.autoSubjects.length - 1}"][data-field="name"]`)?.focus(); return;
+  }
+  const rm = e.target.closest('[data-rmsubj]');
+  if (rm) { state.autoSubjects.splice(+rm.dataset.rmsubj, 1); renderMain(); save(); return; }
+  const pick = e.target.closest('[data-pick]');
+  if (pick) { switchTo(+pick.dataset.pick); return; }
+  const p = e.target.closest('[data-preset]');
+  if (p) {
+    const pr = PRESETS[+p.dataset.preset];
+    state = { ...blankState(), step: 'results', product: { ...pr.product }, a: { ...pr.a }, erosion: [...pr.erosion] };
+    render(); window.scrollTo({ top: 0 }); toast(`Loaded example: ${pr.name}. Edit any step to adjust.`); return;
+  }
+  const ld = e.target.closest('[data-load]');
+  if (ld) { state = { ...blankState(), ...library()[+ld.dataset.load] }; render(); return; }
+  const del = e.target.closest('[data-del]');
+  if (del) { const lib = library(); const [x] = lib.splice(+del.dataset.del, 1); saveLibrary(lib); render(); toast(`Deleted "${x.product.name}"`); }
+});
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.q) { state.a[t.dataset.q] = +t.value; render(); return; }
+  if (t.dataset.erosion) {
+    const id = t.dataset.erosion;
+    state.erosion = t.checked ? [...new Set([...state.erosion, id])] : state.erosion.filter(x => x !== id);
+    render();
+  }
+});
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'pname') { state.product.name = e.target.value; renderSteps(); renderLive(); save(); }
+  if (e.target.id === 'pdesc') { state.product.desc = e.target.value; save(); }
+  if (e.target.id === 'afocus') { state.autoFocus = e.target.value; save(); }
+  const sj = e.target.dataset.subj;
+  if (sj != null) { state.autoSubjects[+sj][e.target.dataset.field] = e.target.value; save(); }
+});
+
+$('#resetBtn').onclick = () => {
+  if (completion().done && !confirm('Start a new evaluation? Unsaved answers will be cleared (saved library entries are kept).')) return;
+  run?.controller.abort(); run = null;
+  state = { ...blankState(), mode: state.mode }; render();
+};
+
+const THEME_KEY = 'moat-evaluator:theme';
+const savedTheme = localStorage.getItem(THEME_KEY);
+if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+$('#themeBtn').onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next; localStorage.setItem(THEME_KEY, next);
+};
+
+render();
+</script>
+</body>
+</html>

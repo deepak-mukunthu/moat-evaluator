@@ -1,0 +1,142 @@
+/* Shared by the browser UI and the server (auto-analysis prompt + schema). */
+/* ------------------------------------------------------------------ *
+ * Framework content — from "Finding a Real Moat in the AI Era"
+ * Core test: a moat gets stronger with use and harder to copy the
+ * longer you hold it. A head start simply decays.
+ * ------------------------------------------------------------------ */
+export const ARTICLE_URL = 'https://deepakmukunthu.substack.com/p/finding-a-real-moat-in-the-ai-era';
+
+export const MOATS = [
+  {
+    id: 'data', short: 'Proprietary data',
+    title: 'Proprietary data that gets better with use',
+    intro: 'The flywheel: usage generates better data, which makes the product better, which attracts more usage.',
+    quote: 'Much "proprietary data" is actually public data, cleaned and renamed.',
+    example: 'Cursor — valued for training data from a million-plus paying developers.',
+    questions: [
+      { id: 'd1', text: 'Where does your data actually come from?',
+        help: 'Be honest about whether a competitor could buy, scrape, or license the same thing.',
+        options: ['Public, scraped, or licensed data anyone can get', 'Public data we cleaned and curated ("cleaned and renamed")', 'Customer-generated data we hold but don\'t learn from', 'Unique data created by usage of our product and fed back in'] },
+      { id: 'd2', text: 'Does usage improve the product on its own?',
+        help: 'A flywheel turns without a heroic manual effort each cycle.',
+        options: ['No — usage doesn\'t change the product', 'Occasionally, through manual review', 'Yes, through periodic retraining or tuning', 'Continuously — more users → better product → more users'] },
+      { id: 'd3', text: 'The few-months test: would your model behave differently from a competitor\'s on the same base model?',
+        help: 'If you swapped your system for a rival\'s built on the same foundation model, would users notice after a few months?',
+        options: ['No — indistinguishable', 'Slightly, on edge cases', 'Measurably better on key tasks', 'Clearly better, and we can prove it with numbers'] },
+      { id: 'd4', text: 'Does the data stay valuable over time?',
+        help: 'Data staleness is one of the main ways a data moat erodes.',
+        options: ['It goes stale quickly and isn\'t refreshed', 'Refreshed manually now and then', 'Refreshed regularly', 'Constantly refreshed by live usage'] },
+    ],
+  },
+  {
+    id: 'network', short: 'Distribution & network',
+    title: 'Distribution and network effects',
+    intro: 'Network effects compound: every participant makes the platform more useful to every other participant.',
+    quote: 'Would the product be worth roughly the same with ten thousand users as with ten million? If so, it is not a network effect.',
+    example: 'Hugging Face — every model uploaded makes the platform more useful (Nvidia, $12.93B).',
+    questions: [
+      { id: 'n1', text: 'The 10K vs 10M test: how much more is the product worth with ten million users than ten thousand?',
+        help: 'Ignore economies of scale. Ask whether user N+1 makes the product better for user N.',
+        options: ['About the same — no network effect', 'A bit better (more reviews, more data)', 'Meaningfully better', 'Dramatically better — users create value for each other'] },
+      { id: 'n2', text: 'Do users contribute assets that other users consume?',
+        help: 'Models, templates, integrations, plugins, content, answers.',
+        options: ['No contributions', 'Some, but marginal', 'A healthy contribution ecosystem', 'Contributions are the core of the platform'] },
+      { id: 'n3', text: 'Do you own your distribution, or rent it?',
+        help: 'Renting distribution means you are "one partner decision away from losing it."',
+        options: ['Fully rented through one channel or partner', 'Mostly rented across a few partners', 'A mix of owned and partner channels', 'We own the customer relationship and the channel'] },
+      { id: 'n4', text: 'How concentrated is your channel risk?',
+        help: 'Think app stores, marketplaces, cloud resellers, OEM deals.',
+        options: ['One partner drives most of our growth', 'Two or three partners dominate', 'Diversified, no partner is critical', 'Partners depend on us more than we depend on them'] },
+    ],
+  },
+  {
+    id: 'workflow', short: 'Workflow & switching costs',
+    title: 'Workflow integration and switching costs',
+    intro: 'Lock-in is moving from seat licences to accumulated context. Cancelling is easy; rebuilding what the system has learned is painful.',
+    quote: 'Replacing it does not mean swapping a vendor; it means retraining a company.',
+    example: 'Systems of record — the place customer context accumulates, so leaving means retraining the company.',
+    questions: [
+      { id: 'w1', text: 'What does it take for a customer to replace you?',
+        help: 'Picture your best customer trying to move to a rival tomorrow.',
+        options: ['Swap a vendor in a day (e.g. change an API key)', 'A few weeks of migration', 'A real re-implementation project', 'Retraining the company — processes, people, and data'] },
+      { id: 'w2', text: 'Does your product accumulate customer-specific context?',
+        help: 'Memory, configurations, history, tuned agents, institutional knowledge that would be lost on exit.',
+        options: ['None — it\'s stateless', 'Some settings and history', 'Significant context that is painful to rebuild', 'Years of context that can\'t be exported meaningfully'] },
+      { id: 'w3', text: 'How central is the product to daily work?',
+        help: 'Optional tools get cut in budget reviews. Systems of record don\'t.',
+        options: ['Optional, nice-to-have tool', 'Used regularly by some teams', 'Embedded in core processes', 'System of record for mission-critical work'] },
+      { id: 'w4', text: 'How deeply is it integrated with other systems?',
+        help: 'Every integration is another thread a customer must cut to leave.',
+        options: ['Standalone', 'A few light integrations', 'Many integrations', 'Deep, two-way integration across the customer\'s stack'] },
+    ],
+  },
+  {
+    id: 'scarce', short: 'Scarce inputs',
+    title: 'Scarce inputs: talent and compute',
+    intro: 'For most firms these are table stakes, not moats. Talent can leave; compute is a tax on staying in the game.',
+    quote: 'Talent alone is a lease, not a deed.',
+    example: 'Nvidia — the one real exception: 85–90% of the accelerator market plus decades of CUDA.',
+    questions: [
+      { id: 's1', text: 'What is your position on compute?',
+        help: '"Most firms are paying tomorrow\'s prices for yesterday\'s hardware, indefinitely."',
+        options: ['We rent commodity compute at market price', 'Some reserved capacity or discounts', 'A structural cost advantage competitors can\'t easily match', 'We control a scarce supply others depend on'] },
+      { id: 's2', text: 'Is there a CUDA-like ecosystem others have built on you?',
+        help: 'Years of tooling, libraries, and skills that tie developers to your stack.',
+        options: ['No ecosystem', 'Early developer adoption', 'An established ecosystem with real switching friction', 'An industry standard with decades of investment'] },
+      { id: 's3', text: 'Where does your know-how live?',
+        help: 'People can leave, and in this market they do.',
+        options: ['With a few key people who could leave', 'A strong team, but one that could be rebuilt', 'Built into processes and tooling', 'Embedded in systems and data, independent of any individual'] },
+    ],
+  },
+  {
+    id: 'trust', short: 'Trust & permission',
+    title: 'Trust and permission to operate',
+    intro: 'Trust takes years to earn and one bad quarter to spend. Regulatory permission can stop competitors from even bidding.',
+    quote: 'Character.AI: legal exposure hollowed the company out.',
+    example: 'Anthropic — 80 of its 261 prospectus pages are risk factors.',
+    questions: [
+      { id: 't1', text: 'What permission do you need to operate, and how hard is it to get?',
+        help: 'Certifications, licences, government authorisations, regulated-industry approvals.',
+        options: ['None needed', 'Basic compliance (e.g. SOC 2)', 'Certifications that take a year or more (FedRAMP, HIPAA, etc.)', 'Licences or clearances that keep competitors from bidding at all'] },
+      { id: 't2', text: 'What is your track record with sensitive data or high-stakes decisions?',
+        help: 'Trust builds slowly.',
+        options: ['New — no track record', 'Some history, with incidents', 'A multi-year record with few issues', 'A long record customers cite as the reason they chose you'] },
+      { id: 't3', text: 'How transparent are you about risk and safety?',
+        help: 'Disclosure, audits, red-teaming, published policies.',
+        options: ['Little or no disclosure', 'Basic policies', 'Regular audits and published practices', 'Rigorous, independently verified disclosure'] },
+      { id: 't4', text: 'How exposed are you to legal, safety, or reputational risk?',
+        help: 'Unmanaged exposure can wipe out a trust moat overnight.',
+        options: ['Significant, unaddressed exposure', 'Known exposure, partly mitigated', 'Mostly mitigated', 'Low and actively managed'] },
+    ],
+  },
+];
+
+export const STRESS = {
+  copy: { text: 'Copy timeline: if a well-funded competitor started today, when would they match you?',
+    help: 'Under 12 months is a head start, not a moat.',
+    options: ['Under 6 months', '6–12 months', '12–24 months', 'More than 24 months', 'Structurally hard to match at any price'] },
+  price: { text: 'The half-price test: if a competitor ships at half your price, do your margins still work?',
+    help: 'Assume they will. If the margins don\'t work then, they don\'t work.',
+    options: ['No — we would lose money or most customers', 'Only with painful cuts', 'Yes — customers would stay and margins hold'] },
+  usage: { text: 'The usage test: does more usage make you stronger, or just more expensive?',
+    help: '"Cursor\'s users produced training data. Character.AI\'s users produced an inference bill."',
+    options: ['More expensive — usage is mainly an inference bill', 'Neutral — usage is revenue, nothing more', 'Somewhat stronger', 'Much stronger — every use compounds the advantage'] },
+  vendor: { text: 'Model-vendor dependency: how many foundation-model vendors can you run on?',
+    help: '67% of enterprises run on a single model vendor; only 23% have a backup plan.',
+    options: ['One vendor, no backup plan', 'One vendor, with a tested backup plan', 'Multi-model — we can switch in days'] },
+};
+export const EROSION = [
+  { id: 'stale', label: 'Our data could go stale' },
+  { id: 'deals', label: 'Key deals or pricing could be renegotiated' },
+  { id: 'channel', label: 'A channel partner could change its terms' },
+  { id: 'people', label: 'Losing a few people would hurt us badly' },
+  { id: 'model', label: 'A model provider could compete with us directly' },
+];
+export const EXEC = {
+  prod: { text: 'Is the product actually in production?',
+    help: 'Teams in production 12+ months report +287% median annualised ROI; teams stuck in pilot report −34%; 82% never reach production.',
+    options: ['Not yet built / concept', 'Pilot or proof of concept', 'In production for under 12 months', 'In production for 12 months or more'] },
+  evals: { text: 'Can you measure, with a number, whether your output is any good?',
+    help: '"Anyone can call an API this afternoon, but almost nobody can tell you, with a number, whether the output is any good."',
+    options: ['No evals', 'Ad-hoc spot checks', 'Evals for some core tasks', 'Systematic quantitative evals, run on every change'] },
+};
